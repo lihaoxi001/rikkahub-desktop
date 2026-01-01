@@ -4,6 +4,10 @@ use gpui::*;
 use std::sync::Arc;
 use crate::client::ApiClient;
 
+use gpui_component::StyledExt;
+use gpui_component::scroll::ScrollableElement;
+use gpui::prelude::FluentBuilder;
+
 pub struct RikkaApp {
     api_client: Arc<ApiClient>,
     selected_model: String,
@@ -84,7 +88,7 @@ impl Render for RikkaApp {
                             .bg(rgb(0x313244))
                             .rounded_md()
                             .text_sm()
-                            .child(&self.selected_model),
+                            .child(self.selected_model.clone()),
                     )
                     .child(
                         div()
@@ -99,75 +103,80 @@ impl Render for RikkaApp {
             )
             .child(
                 // 消息列表区
-                div()
-                    .flex_1()
-                    .flex()
-                    .flex_col()
-                    .overflow_y_scroll()
-                    .px_4()
-                    .py_4()
-                    .gap_3()
-                    .children(self.messages.iter().map(|msg| {
-                        div()
-                            .w_full()
-                            .px_4()
-                            .py_3()
-                            .rounded_lg()
-                            .max_w(px(800.0))
-                            .when(msg.role == "user", |div| {
-                                div.ml_auto().bg(rgb(0x45475a))
-                            })
-                            .when(msg.role == "assistant", |div| {
-                                div.mr_auto().bg(rgb(0x313244))
-                            })
+                {
+                    let messages_content = if self.messages.is_empty() {
+                        vec![div()
+                            .flex()
+                            .flex_col()
+                            .items_center()
+                            .justify_center()
+                            .size_full()
+                            .gap_2()
                             .child(
                                 div()
+                                    .text_2xl()
+                                    .font_semibold()
+                                    .text_color(rgb(0x89b4fa))
+                                    .child("🤖 RikkaHub"),
+                            )
+                            .child(
+                                div()
+                                    .text_color(rgb(0x6c7086))
+                                    .child("输入消息开始测试对话"),
+                            )
+                            .child(
+                                div()
+                                    .mt_4()
+                                    .px_4()
+                                    .py_2()
+                                    .bg(rgb(0x313244))
+                                    .rounded_md()
                                     .text_xs()
                                     .text_color(rgb(0x6c7086))
-                                    .mb_1()
-                                    .child(if msg.role == "user" { "用户" } else { "助手" }),
-                            )
-                            .child(
-                                div()
-                                    .text_sm()
-                                    .line_height(rel(1.5))
-                                    .child(&msg.content),
-                            )
-                    }))
-                    .when(self.messages.is_empty(), |div| {
-                        div.child(
-                            div()
-                                .flex()
-                                .flex_col()
-                                .items_center()
-                                .justify_center()
-                                .size_full()
-                                .gap_2()
+                                    .child("提示: 此界面连接本地 API (http://localhost:3000)"),
+                            ).into_any()]
+                    } else {
+                        self.messages.iter().map(|msg| {
+                            let msg_div = div()
+                                .w_full()
+                                .px_4()
+                                .py_3()
+                                .rounded_lg()
+                                .max_w(px(800.0));
+                            
+                            let msg_div = if msg.role == "user" {
+                                msg_div.ml_auto().bg(rgb(0x45475a))
+                            } else {
+                                msg_div.mr_auto().bg(rgb(0x313244))
+                            };
+                            
+                            msg_div
                                 .child(
                                     div()
-                                        .text_2xl()
-                                        .font_semibold()
-                                        .text_color(rgb(0x89b4fa))
-                                        .child("🤖 RikkaHub"),
-                                )
-                                .child(
-                                    div()
-                                        .text_color(rgb(0x6c7086))
-                                        .child("输入消息开始测试对话"),
-                                )
-                                .child(
-                                    div()
-                                        .mt_4()
-                                        .px_4()
-                                        .py_2()
-                                        .bg(rgb(0x313244))
-                                        .rounded_md()
                                         .text_xs()
                                         .text_color(rgb(0x6c7086))
-                                        .child("提示: 此界面连接本地 API (http://localhost:3000)"),
+                                        .mb_1()
+                                        .child(if msg.role == "user" { "用户" } else { "助手" }),
                                 )
-                        )
-                    }),
+                                .child(
+                                    div()
+                                        .text_sm()
+                                        .line_height(px(1.5))
+                                        .child(msg.content.clone()),
+                                )
+                                .into_any()
+                        }).collect::<Vec<_>>()
+                    };
+                    
+                    div()
+                        .flex_1()
+                        .flex()
+                        .flex_col()
+                        .px_4()
+                        .py_4()
+                        .gap_3()
+                        .children(messages_content)
+                }),
             )
             .child(
                 // 输入区
@@ -207,7 +216,7 @@ impl Render for RikkaApp {
                                             .child(if self.input_text.is_empty() {
                                                 "在此输入消息..."
                                             } else {
-                                                &self.input_text
+                                                self.input_text.clone()
                                             }),
                                     ),
                             )
