@@ -1,6 +1,9 @@
 //! 主应用组件
 
 use gpui::*;
+use gpui::prelude::*;
+use gpui_component::scroll::ScrollableElement;
+use gpui_component::StyledExt;
 use std::sync::Arc;
 use crate::client::ApiClient;
 
@@ -84,7 +87,7 @@ impl Render for RikkaApp {
                             .bg(rgb(0x313244))
                             .rounded_md()
                             .text_sm()
-                            .child(&self.selected_model),
+                            .child(self.selected_model.clone()),
                     )
                     .child(
                         div()
@@ -103,7 +106,7 @@ impl Render for RikkaApp {
                     .flex_1()
                     .flex()
                     .flex_col()
-                    .overflow_y_scroll()
+                    .overflow_y_scrollbar()
                     .px_4()
                     .py_4()
                     .gap_3()
@@ -130,43 +133,46 @@ impl Render for RikkaApp {
                             .child(
                                 div()
                                     .text_sm()
-                                    .line_height(rel(1.5))
-                                    .child(&msg.content),
+                                    .line_height(relative(1.5))
+                                    .child(msg.content.clone()),
                             )
                     }))
-                    .when(self.messages.is_empty(), |div| {
-                        div.child(
-                            div()
-                                .flex()
-                                .flex_col()
-                                .items_center()
-                                .justify_center()
-                                .size_full()
-                                .gap_2()
-                                .child(
-                                    div()
-                                        .text_2xl()
-                                        .font_semibold()
-                                        .text_color(rgb(0x89b4fa))
-                                        .child("🤖 RikkaHub"),
-                                )
-                                .child(
-                                    div()
-                                        .text_color(rgb(0x6c7086))
-                                        .child("输入消息开始测试对话"),
-                                )
-                                .child(
-                                    div()
-                                        .mt_4()
-                                        .px_4()
-                                        .py_2()
-                                        .bg(rgb(0x313244))
-                                        .rounded_md()
-                                        .text_xs()
-                                        .text_color(rgb(0x6c7086))
-                                        .child("提示: 此界面连接本地 API (http://localhost:3000)"),
-                                )
-                        )
+                    .map(|mut parent| {
+                        if self.messages.is_empty() {
+                            parent = parent.child(
+                                div()
+                                    .flex()
+                                    .flex_col()
+                                    .items_center()
+                                    .justify_center()
+                                    .size_full()
+                                    .gap_2()
+                                    .child(
+                                        div()
+                                            .text_2xl()
+                                            .font_semibold()
+                                            .text_color(rgb(0x89b4fa))
+                                            .child("🤖 RikkaHub"),
+                                    )
+                                    .child(
+                                        div()
+                                            .text_color(rgb(0x6c7086))
+                                            .child("输入消息开始测试对话"),
+                                    )
+                                    .child(
+                                        div()
+                                            .mt_4()
+                                            .px_4()
+                                            .py_2()
+                                            .bg(rgb(0x313244))
+                                            .rounded_md()
+                                            .text_xs()
+                                            .text_color(rgb(0x6c7086))
+                                            .child("提示: 此界面连接本地 API (http://localhost:3000)"),
+                                    )
+                            );
+                        }
+                        parent
                     }),
             )
             .child(
@@ -205,9 +211,9 @@ impl Render for RikkaApp {
                                             .text_sm()
                                             .text_color(rgb(0xcdd6f4))
                                             .child(if self.input_text.is_empty() {
-                                                "在此输入消息..."
+                                                "在此输入消息...".to_string()
                                             } else {
-                                                &self.input_text
+                                                self.input_text.clone()
                                             }),
                                     ),
                             )
